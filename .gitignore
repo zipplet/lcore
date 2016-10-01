@@ -1,0 +1,10 @@
+*.*~
+*.dcu
+*.exe
+*.o
+*.ppu
+*.tmp
+*.~*
+__history
+clean.bat
+lcoretest
