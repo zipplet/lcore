@@ -45,6 +45,7 @@ var
   a,b:integer;
   h:longword;
 begin
+  result := 0;
   b := length(s);
   h := 216613626;
   for a := 1 to b do begin

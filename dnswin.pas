@@ -43,7 +43,7 @@ procedure init;
 
 implementation
 uses
-  { zipplet: moved pgtypes to interface because it's needed for the string definitions }
+  // zipplet: moved pgtypes to interface because it's needed for the string definitions
   lsocket,sysutils,winsock,windows,messages;
 
 type
@@ -110,7 +110,7 @@ begin
 
       getmem(output,sizeof(taddrinfo));
       if assigned(prev) then prev.ai_next := output;
-      getmem(output.ai_addr,sizeof(tinetsockaddr));
+      getmem(output.ai_addr,sizeof(tlinetsockaddr4));
       if servname <> nil then output.ai_addr.InAddr.port := htons(strtoint(servname)) else output.ai_addr.InAddr.port := 0;
       output.ai_addr.InAddr.addr := longint(addrlist^^);
       inc(integer(addrlist),4);
@@ -118,7 +118,7 @@ begin
       output.ai_family := af_inet;
       output.ai_socktype := 0;
       output.ai_protocol := 0;
-      output.ai_addrlen := sizeof(tinetsockaddr);
+      output.ai_addrlen := sizeof(tlinetsockaddr4);
       output.ai_canonname := nil;
       output.ai_next := nil;
       prev := output;

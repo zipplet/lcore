@@ -70,55 +70,52 @@ type
     {$endif}
   end;
 
-  {$ifdef mswindows}
-    TInetSockAddr = packed Record
-      family:Word;
-      port  :Word;
-      addr  :uint32;
-      pad   :array [1..8] of byte;
-    end;
-    {$ifdef ipv6}
+  {zipplet 20170204: FPC 3.0.0 changed the definition of TInetSockAddr:
+    - http://www.freepascal.org/docs-html/rtl/sockets/tinetsockaddr.html
+    - http://www.freepascal.org/docs-html/rtl/sockets/sockaddr_in.html
+   Due to this, TInetSockAddr -> TLInetSockAddr4 / TLInetSockAddr6
+   Using our own types no matter what OS or compiler version will prevent future problems.
+   Adding "4" to non IPv6 record names improves code clarity }
 
-      TInetSockAddr6 = packed record
-        sin6_family: word;
-        sin6_port: word;
-        sin6_flowinfo: uint32;
-        sin6_addr: tin6_addr;
-        sin6_scope_id: uint32;
-      end;
-    {$endif}
-  {$endif}
-
-
-
-  {$ifdef ipv6}
+  {$ifndef mswindows}
+    //zipplet 20170204: Do we still need to support ver1_0? Perhaps a cleanup is in order.
+    //For now keep supporting it for compatibility.
     {$ifdef ver1_0}
-      cuint16=word;
-      cuint32=dword;
-      sa_family_t=word;
-
-      TInetSockAddr6 = packed record
-        sin6_family: word;
-        sin6_port: word;
-        sin6_flowinfo: uint32;
-        sin6_addr: tin6_addr;
-        sin6_scope_id: uint32;
-      end;
+      cuint16 = word;
+      cuint32 = dword;
+      sa_family_t = word;
     {$endif}
   {$endif}
+
+  TLInetSockAddr4 = packed Record
+    family:Word;
+    port  :Word;
+    addr  :uint32;
+    pad   :array [0..7] of byte;   //zipplet 20170204 - originally this was 1..8 for some reason
+  end;
+  
+  {$ifdef ipv6}
+    TLInetSockAddr6 = packed record
+      sin6_family: word;
+      sin6_port: word;
+      sin6_flowinfo: uint32;
+      sin6_addr: tin6_addr;
+      sin6_scope_id: uint32;
+    end;
+  {$endif}
+
+  //zipplet 20170204: I did not rename the unioned record. We might want to rename this to TLinetSockAddrv
   TinetSockAddrv = packed record
     case integer of
-      0: (InAddr:TInetSockAddr);
+      0: (InAddr:TLInetSockAddr4);
       {$ifdef ipv6}
-      1: (InAddr6:TInetSockAddr6);
+      1: (InAddr6:TLInetSockAddr6);
       {$endif}
   end;
   Pinetsockaddrv = ^Tinetsockaddrv;
 
   type
-    tsockaddrin=TInetSockAddr;
-
-
+    tsockaddrin=TLInetSockAddr4;
 
 {
 bin IP list code, by beware
@@ -212,14 +209,14 @@ begin
     inAddr.InAddr.family:=AF_INET;
     inAddr.InAddr.port:=htons(strtointdef(port,0));
     inAddr.InAddr.addr:=addr.ip;
-    result := sizeof(tinetsockaddr);
+    result := sizeof(tlinetsockaddr4);
   end else
   {$ifdef ipv6}
   if addr.family = AF_INET6 then begin
     inAddr.InAddr6.sin6_family:=AF_INET6;
     inAddr.InAddr6.sin6_port:=htons(strtointdef(port,0));
     inAddr.InAddr6.sin6_addr:=addr.ip6;
-    result := sizeof(tinetsockaddr6);
+    result := sizeof(tlinetsockaddr6);
   end;
   {$endif}
 end;
@@ -227,9 +224,9 @@ end;
 function inaddrsize(inaddr:tinetsockaddrv):integer;
 begin
   {$ifdef ipv6}
-  if inaddr.inaddr.family = AF_INET6 then result := sizeof(tinetsockaddr6) else
+  if inaddr.inaddr.family = AF_INET6 then result := sizeof(tlinetsockaddr6) else
   {$endif}
-  result := sizeof(tinetsockaddr);
+  result := sizeof(tlinetsockaddr4);
 end;
 
 {internal}
