@@ -300,7 +300,10 @@ begin
   {$endif}
 
   {try v4}
-  binip.ip := htonl(longip(s));
+  // zipplet: htonl() expects a uint32 but longip() spits out longint.
+  // Because longip() is deprecated, we do not fix it but typecast.
+  //binip.ip := htonl(longip(s));
+  binip.ip := htonl(uint32(longip(s)));
   if (binip.ip <> 0) or (s = '0.0.0.0') then begin
     result := true;
     binip.family := AF_INET;
